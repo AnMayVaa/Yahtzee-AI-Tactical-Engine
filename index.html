@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yahtzee Master Solver</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="main-header">
+        <h1>Yahtzee Master</h1>
+        <p>Calculate your best moves and dominate the game.</p>
+    </header>
+
+    <div class="app-layout">
+        <!-- LEFT: SCORECARD -->
+        <aside class="sidebar glass-panel">
+            <h2>Score Tracker</h2>
+            <p class="subtitle">Leave empty if category is open. Type '0' if scratched.</p>
+            
+            <table id="scorecard-table" class="scorecard">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Me</th>
+                        <th>Opp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-cat="ones"><td>Ones</td><td><input type="number" class="me-input" min="0" max="5"></td><td><input type="number" class="opp-input" min="0" max="5"></td></tr>
+                    <tr data-cat="twos"><td>Twos</td><td><input type="number" class="me-input" min="0" max="10"></td><td><input type="number" class="opp-input" min="0" max="10"></td></tr>
+                    <tr data-cat="threes"><td>Threes</td><td><input type="number" class="me-input" min="0" max="15"></td><td><input type="number" class="opp-input" min="0" max="15"></td></tr>
+                    <tr data-cat="fours"><td>Fours</td><td><input type="number" class="me-input" min="0" max="20"></td><td><input type="number" class="opp-input" min="0" max="20"></td></tr>
+                    <tr data-cat="fives"><td>Fives</td><td><input type="number" class="me-input" min="0" max="25"></td><td><input type="number" class="opp-input" min="0" max="25"></td></tr>
+                    <tr data-cat="sixes"><td>Sixes</td><td><input type="number" class="me-input" min="0" max="30"></td><td><input type="number" class="opp-input" min="0" max="30"></td></tr>
+                    <tr class="bonus-row"><td>Bonus (63+)</td><td id="me-bonus" class="computed">0 <div style="font-size:0.75rem;font-weight:normal;color:var(--text-secondary);">(0/63)</div></td><td id="opp-bonus" class="computed">0 <div style="font-size:0.75rem;font-weight:normal;color:var(--text-secondary);">(0/63)</div></td></tr>
+                    
+                    <tr class="divider"><td colspan="3"></td></tr>
+
+                    <tr data-cat="threeOfAKind"><td>3 of a Kind</td><td><input type="number" class="me-input" min="0" max="30"></td><td><input type="number" class="opp-input" min="0" max="30"></td></tr>
+                    <tr data-cat="fourOfAKind"><td>4 of a Kind</td><td><input type="number" class="me-input" min="0" max="30"></td><td><input type="number" class="opp-input" min="0" max="30"></td></tr>
+                    <tr data-cat="fullHouse"><td>Full House</td><td><input type="number" class="me-input" min="0" max="25" step="25"></td><td><input type="number" class="opp-input" min="0" max="25" step="25"></td></tr>
+                    <tr data-cat="smallStraight"><td>Sm. Straight</td><td><input type="number" class="me-input" min="0" max="30" step="30"></td><td><input type="number" class="opp-input" min="0" max="30" step="30"></td></tr>
+                    <tr data-cat="largeStraight"><td>Lg. Straight</td><td><input type="number" class="me-input" min="0" max="40" step="40"></td><td><input type="number" class="opp-input" min="0" max="40" step="40"></td></tr>
+                    <tr data-cat="chance"><td>Chance</td><td><input type="number" class="me-input" min="0" max="30"></td><td><input type="number" class="opp-input" min="0" max="30"></td></tr>
+                    <tr data-cat="yahtzee"><td>Yahtzee</td><td><input type="number" class="me-input" min="0" max="50" step="50"></td><td><input type="number" class="opp-input" min="0" max="50" step="50"></td></tr>
+                    <tr data-cat="yahtzeeBonus"><td>Y. Bonus</td><td><input type="number" class="me-input" min="0" max="300" step="100"></td><td><input type="number" class="opp-input" min="0" max="300" step="100"></td></tr>
+                </tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td>TOTAL</td>
+                        <td id="me-total">0</td>
+                        <td id="opp-total">0</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="game-status" id="game-status">
+                <h3>Match Projection</h3>
+                <p id="risk-mode" class="risk-badge neutral">Balanced</p>
+                <div class="projection-details" id="projection-details">
+                    Fill out scores to see projection...
+                </div>
+            </div>
+            
+            <button id="clear-board-btn" class="btn secondary small-btn" style="margin-top: 1rem; width: 100%;">Clear Scorecard</button>
+        </aside>
+
+        <!-- RIGHT: MAIN APP -->
+        <main class="main-content">
+            <section class="glass-panel dice-section">
+                <h2>Current Dice</h2>
+                <p class="subtitle">Click a die to change its value.</p>
+                <div class="dice-container" id="dice-container">
+                    <div class="die" data-index="0" data-value="1">1</div>
+                    <div class="die" data-index="1" data-value="1">1</div>
+                    <div class="die" data-index="2" data-value="1">1</div>
+                    <div class="die" data-index="3" data-value="1">1</div>
+                    <div class="die" data-index="4" data-value="1">1</div>
+                </div>
+            </section>
+
+            <section class="glass-panel rolls-section">
+                <h2>Rolls Left</h2>
+                <div class="toggle-group" id="rolls-group">
+                    <label class="toggle">
+                        <input type="radio" name="rolls" value="2" checked>
+                        <span>2 Rolls Left (First Roll)</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="radio" name="rolls" value="1">
+                        <span>1 Roll Left (Second Roll)</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="radio" name="rolls" value="0">
+                        <span>0 Rolls Left (Final)</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="glass-panel results-section highlight">
+                <h2>Tactical Recommendations</h2>
+                <button id="calculate-btn" class="btn primary glowing">Calculate Best Move</button>
+                
+                <div id="results-container" class="results-container hidden">
+                    <div class="recommendation-card">
+                        <h3>Best Dice to Keep:</h3>
+                        <div class="keep-dice-display" id="keep-dice-display">
+                            <!-- Populated via JS -->
+                        </div>
+                        <p class="expected-score">Expected Turn Score: <span id="expected-score-val">0.00</span></p>
+                    </div>
+
+                    <div class="probabilities-card" id="prob-card">
+                        <div class="prob-header">
+                            <h3>Chances to Hit:</h3>
+                            <select id="sort-probs" class="sort-select">
+                                <option value="chance">Sort by Chance</option>
+                                <option value="score">Sort by Score</option>
+                            </select>
+                        </div>
+                        <ul class="prob-list" id="prob-list">
+                            <!-- Populated via JS -->
+                        </ul>
+                    </div>
+
+                    <div class="immediate-score-card" id="immediate-card">
+                        <div class="prob-header">
+                            <h3>Score Now Options:</h3>
+                            <select id="sort-immediate" class="sort-select">
+                                <option value="tactic">Sort by Tactic</option>
+                                <option value="score">Sort by Score</option>
+                            </select>
+                        </div>
+                        <ul class="prob-list" id="immediate-list">
+                            <!-- Populated via JS -->
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" id="modal-content">
+            <h2 id="modal-title">You Won!</h2>
+            <p id="modal-score" class="final-score">320 - 280</p>
+            <button id="modal-close" class="btn primary glowing">Play Again</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
